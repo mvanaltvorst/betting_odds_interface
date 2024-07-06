@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Unibet Odds Fetcher
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Fetch odds from Unibet and send to personal server.
+// @version      0.4
+// @description  Fetch odds from Unibet and send to personal server with debug logging, failsafe updates, and missing odds check
 // @match        https://www.unibet.nl/betting/sports/event/*
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -15,13 +15,18 @@
     function getOdds() {
         const regularOddsElements = document.querySelectorAll('.KambiBC-bet-offer-subcategory:nth-child(1) .sc-kAyceB');
         const advancingOddsElements = document.querySelectorAll('.KambiBC-bet-offer-subcategory:nth-child(2) .sc-kAyceB');
+        
+        if (regularOddsElements.length < 3 || advancingOddsElements.length < 2) {
+            console.log('Debug: Some odds are missing. Skipping update.');
+            return null;
+        }
 
         const regularOdds = Array.from(regularOddsElements).map(el => parseFloat(el.textContent));
         const advancingOdds = Array.from(advancingOddsElements).map(el => parseFloat(el.textContent));
-
+        
         console.log('Debug: Fetched regular odds:', regularOdds);
         console.log('Debug: Fetched advancing odds:', advancingOdds);
-
+        
         return {
             team_1: regularOdds[0],
             draw: regularOdds[1],
@@ -51,9 +56,13 @@
 
     function updateOdds() {
         try {
-            console.log('Debug: Updating odds...');
+            console.log('Debug: Attempting to update odds...');
             const odds = getOdds();
-            sendOddsToServer(odds);
+            if (odds) {
+                sendOddsToServer(odds);
+            } else {
+                console.log('Debug: Odds update skipped due to missing data.');
+            }
         } catch (error) {
             console.error('Debug: Error updating odds:', error);
         }
@@ -71,7 +80,7 @@
         const callback = function(mutationsList, observer) {
             for(let mutation of mutationsList) {
                 if (mutation.type === 'childList') {
-                    console.log('Debug: Odds change detected, updating...');
+                    console.log('Debug: Odds change detected, attempting update...');
                     updateOdds();
                     break;
                 }
