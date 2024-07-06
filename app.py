@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 import numpy as np
 import pandas as pd
@@ -88,6 +88,32 @@ def handle_update_odds(data):
         },
         broadcast=True,
     )
+
+
+@app.route("/set_state", methods=["POST"])
+def set_state():
+    data = request.json
+    state["team1_odds"] = data["team_1"]
+    state["draw_odds"] = data["draw"]
+    state["team2_odds"] = data["team_2"]
+    state["team1_advancing_odds"] = data["team1_advancing"]
+    state["team2_advancing_odds"] = data["team2_advancing"]
+    
+    probabilities = calculate_probabilities()
+    match_margin = calculate_match_margin()
+    advancing_margin = calculate_advancing_margin()
+    
+    socketio.emit(
+        "odds_updated",
+        {
+            "state": state,
+            "probabilities": probabilities,
+            "match_margin": match_margin,
+            "advancing_margin": advancing_margin,
+        }
+    )
+    
+    return jsonify({"status": "success", "message": "State updated successfully"})
 
 
 if __name__ == "__main__":
