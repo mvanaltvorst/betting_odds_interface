@@ -47,10 +47,10 @@ def calculate_probabilities():
     match_odds = [state["team1_odds"], state["draw_odds"], state["team2_odds"]]
     methods = [
         ("Match Ask", betting_implied_ask(match_odds)),
-        ("Match Mean", betting_implied_mean(match_odds)),
+        ("Match Fair", betting_implied_mean(match_odds)),
         ("Match Bid", betting_implied_bid(match_odds)),
         (
-            "Advancing Mean",
+            "Advancing Fair",
             advancing_probs(
                 state["team1_advancing_odds"], state["team2_advancing_odds"]
             ),
