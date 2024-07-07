@@ -90,6 +90,22 @@ def handle_update_odds(data):
     )
 
 
+@socketio.on("request_initial_state")
+def handle_request_initial_state():
+    probabilities = calculate_probabilities()
+    match_margin = calculate_match_margin()
+    advancing_margin = calculate_advancing_margin()
+    emit(
+        "odds_updated",
+        {
+            "state": state,
+            "probabilities": probabilities,
+            "match_margin": match_margin,
+            "advancing_margin": advancing_margin,
+        },
+    )
+
+
 @app.route("/set_state", methods=["POST"])
 def set_state():
     data = request.json
@@ -98,11 +114,11 @@ def set_state():
     state["team2_odds"] = data["team_2"]
     state["team1_advancing_odds"] = data["team1_advancing"]
     state["team2_advancing_odds"] = data["team2_advancing"]
-    
+
     probabilities = calculate_probabilities()
     match_margin = calculate_match_margin()
     advancing_margin = calculate_advancing_margin()
-    
+
     socketio.emit(
         "odds_updated",
         {
@@ -110,11 +126,11 @@ def set_state():
             "probabilities": probabilities,
             "match_margin": match_margin,
             "advancing_margin": advancing_margin,
-        }
+        },
     )
-    
+
     return jsonify({"status": "success", "message": "State updated successfully"})
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5001)
+    socketio.run(app, debug=True, port=5001, host="0.0.0.0")
