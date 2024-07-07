@@ -27,6 +27,16 @@ def betting_implied_mean(odds):
     return implied_probs / np.sum(implied_probs)
 
 
+def betting_implied_bid(odds):
+    # Synthetic bid priced by buying the two other outcomes
+    ask_probs = betting_implied_ask(odds)
+    
+    team1_bid = 1 - (ask_probs[1] + ask_probs[2])
+    draw_bid =  1 - (ask_probs[0] + ask_probs[2])
+    team2_bid = 1 - (ask_probs[0] + ask_probs[1])
+    
+    return np.array([team1_bid, draw_bid, team2_bid])
+
 def advancing_probs(team1_advancing_odds, team2_advancing_odds):
     match_odds = np.array([team1_advancing_odds, float("inf"), team2_advancing_odds])
     implied_probs = 1 / match_odds
@@ -38,6 +48,7 @@ def calculate_probabilities():
     methods = [
         ("Match Ask", betting_implied_ask(match_odds)),
         ("Match Mean", betting_implied_mean(match_odds)),
+        ("Match Bid", betting_implied_bid(match_odds)),
         (
             "Advancing Mean",
             advancing_probs(
